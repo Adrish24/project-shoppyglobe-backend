@@ -1,5 +1,6 @@
 import User from "../models/User.js";
-
+import bcrypt from "bcrypt";
+import generateToken from "../utils/generateToken.js";
 
 // Function to register a new user
 export async function register(req, res) {
@@ -11,9 +12,16 @@ export async function register(req, res) {
   }
 
   try {
+    const userExists = await User.findOne({ username });
+
+    if (userExists)
+      return res.status(400).json({ message: "user already exsists!" });
+
+    const hashedPassword = await bcrypt.hash(password, 10); // Hash the password before saving
+
     await User.create({
       username,
-      password,
+      password: hashedPassword,
     });
 
     res.status(201).json({ message: "User created successfully!" });
@@ -41,18 +49,17 @@ export async function login(req, res) {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const isPasswordValued = user.password === password;           // Check if the provided password matches the stored password
+    const isPasswordValid = await bcrypt.compare(password, user.password); // Compare the provided password with the hashed password
 
-    if (!isPasswordValued) {
+    if (!isPasswordValid) {
       return res.status(401).json({ message: "Wrong password" });
     }
 
-    res.status(200).json({ message: "Login successfull!.", user });
+    // If login is successful, you can return user details or a token
+    const token = generateToken(user);
+    res.status(200).json({ message: "Login successfull!.", user, token });
   } catch (error) {
     console.log(error);
-    res.status(500).json({
-      message: "Failed to login!. Try again later",
-      error: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 }
