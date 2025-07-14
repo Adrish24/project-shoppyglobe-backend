@@ -1,11 +1,13 @@
 import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
-import User from "../models/User.js";
 
 // Function to add a product to the cart
 export async function addToCart(req, res) {
   const { userId } = req;
   const { productId, quantity } = req.body;
+
+  if (!productId)
+    return res.status(400).json({ message: "Product ID is required!" });
 
   try {
     const product = await Product.findById(productId); // Find product by ID
@@ -65,11 +67,41 @@ export async function getCart(req, res) {
 }
 
 // Function to update a cart item by its ID
-export async function updateCartItemById(req, res) {
+export async function updateCartItem(req, res) {
+  const { userId } = req;
   const { quantity } = req.body;
   const { productId } = req.params;
+  console.log(quantity);
+  try {
+    const cart = await Cart.findOne({ userId });
 
-  res.json({ message: "Update cart item by ID not implemented yet" });
+    const item = cart.products.find(
+      (i) => i.productId.toString() === productId
+    );
+    if (!item) {
+      return res.status(404).json({
+        message: "product not found in cart!",
+      });
+    }
+
+    if (quantity <= 0) {
+      item.quantity = 1; // Reset quantity to 1 if it is set to 0
+    } else {
+      item.quantity = quantity; // Update the quantity of the product in the cart
+    }
+
+    await cart.save(); // Save the updated cart
+
+    res.status(200).json({
+      message: `Product with ID ${productId} updated successfully!`,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Failed to update cart items!. Try again later",
+      error: error.message,
+    });
+  }
 }
 
 export async function removeCartItemById(req, res) {
@@ -82,11 +114,9 @@ export async function removeCartItemById(req, res) {
         $pull: { products: { productId } },
       }
     );
-    res
-      .status(200)
-      .json({
-        message: `Product with ID ${productId} removed from cart successfully!`,
-      });
+    res.status(200).json({
+      message: `Product with ID ${productId} removed from cart successfully!`,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({
