@@ -6,6 +6,9 @@ A comprehensive e-commerce backend API built with Node.js, Express.js, and Mongo
 
 [GitHub Repository](https://github.com/Adrish24/project-shoppyglobe-backend)
 
+## FrontEnd 
+[GitHub Repository](https://github.com/Adrish24/project-shoppyglobe-ecommerce-app)
+
 ## 🚀 Features
 
 - **User Authentication**: Registration and login with JWT tokens
